@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Todo List — Fully Functional</title>
+    <style>
+        /* ===== Theme ===== */
+        :root{
+            --bg-1:#0f1226;
+            --bg-2:#101a3f;
+            --card-bg: rgba(255,255,255,.08);
+            --card-brd: rgba(255,255,255,.18);
+            --shadow: 0 10px 30px rgba(0,0,0,.35);
+            --text: #e9ecf1;
+            --muted: #b9c2d3;
+            --primary:#6ea8fe;
+            --warning:#ffd24d;
+            --success:#63d297;
+            --danger:#ff6b6b;
+        }
+
+        /* ===== Base ===== */
+        html, body { height: 100%; }
+        body{
+            min-height:100vh;
+            background:
+                    radial-gradient(1200px 600px at 10% -10%, #2b68ff22, transparent 60%),
+                    radial-gradient(1000px 700px at 110% 10%, #24d6a922, transparent 60%),
+                    linear-gradient(160deg, var(--bg-1), var(--bg-2));
+            color: var(--text);
+            margin: 0;
+            font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial;
+            -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ===== Container & Card ===== */
+        .app-wrap{ max-width: 980px; margin: clamp(24px, 4vh, 56px) auto; padding: 0 16px; }
+        .glass-card{
+            background: var(--card-bg);
+            border: 1px solid var(--card-brd);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border-radius: 20px; box-shadow: var(--shadow); overflow: hidden;
+        }
+
+        /* ===== Header ===== */
+        .app-header{
+            padding: 24px 24px 14px;
+            display:flex; align-items:center; justify-content:space-between; gap:16px;
+        }
+        .app-title{ margin:0; font-weight: 800; letter-spacing:.3px; font-size: 1.75rem; }
+        .sub{ color: var(--muted); font-size: .95rem; }
+
+        /* search */
+        .search-wrap { min-width: 260px; max-width: 340px; width: 100%; }
+        .search{ width: 100%; }
+
+        /* ===== Tabs / Sort ===== */
+        .tabs{
+            padding: 0 16px 12px;
+            display:flex; align-items:center; gap:10px; flex-wrap: wrap;
+        }
+        .tab{
+            background: transparent; color: var(--text);
+            border: 1px solid rgba(255,255,255,.18);
+            padding: .45rem .7rem; border-radius: 999px;
+            display:inline-flex; align-items:center; gap:.45rem;
+            transition: background .2s ease, transform .15s ease, border-color .2s ease;
+            cursor: pointer;
+        }
+        .tab:hover{ background: rgba(255,255,255,.08); transform: translateY(-1px); }
+        .tab.active{ background: linear-gradient(135deg, #6ea8fe, #3ddab6); color:#0b1020; border-color: transparent; }
+        .tab-badge{
+            background: rgba(0,0,0,.15); color: currentColor;
+            border-radius: 999px; padding: .05rem .45rem; font-weight: 700;
+        }
+        .tabs-spacer{ flex:1; }
+        .sort{ display:flex; align-items:center; gap:.5rem; }
+        .sort-label{ color: var(--muted); font-size:.9rem; }
+        .sort-select{ min-width: 130px; }
+
+        /* ===== Form Row ===== */
+        .form-zone{ padding: 0 24px 18px; }
+        .form-control, .form-select{
+            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.18);
+            color: var(--text);
+            padding: .6rem .75rem; border-radius: 12px; width: 100%;
+        }
+        .form-control::placeholder{ color:#c6cbd8aa; }
+        .form-control:focus, .form-select:focus{
+            border-color: #8bb3ff;
+            box-shadow: 0 0 0 .2rem rgba(142,168,255,.18);
+            outline: none;
+        }
+
+        /* ===== List ===== */
+        .list-holder{ padding: 8px 8px 22px; }
+        .list-group{ border-radius: 16px; overflow: hidden; margin: 0; padding: 0; list-style: none; }
+        .list-group-item{
+            display:flex; align-items:center; justify-content:space-between; gap: 12px;
+            background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+            color: var(--text);
+            padding: 14px 16px;
+            transition: transform .18s ease, background .18s ease, border-color .18s ease;
+            border-top:1px solid rgba(255,255,255,.10);
+        }
+        .list-group-item:first-child{ border-top-color: transparent; }
+        .list-group-item:hover{
+            background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+            transform: translateY(-2px);
+            border-color: rgba(255,255,255,.20);
+        }
+
+        /* badge (status) */
+        .badge.status{
+            border-radius: 999px; padding: .28rem .65rem; font-weight:800; letter-spacing:.2px;
+            border:1px solid transparent; white-space: nowrap;
+            cursor: pointer; user-select:none;
+            transition: transform .12s ease, filter .12s ease, background .2s ease;
+        }
+        .badge.status:hover{ transform: translateY(-1px); filter: brightness(1.05); }
+        .status-pending{ background: #64748b33; border-color:#94a3b888; color:#e2e8f0;}
+        .status-progress{ background: #997a0033; border-color:#ffd24d99; color:#ffe08a;}
+        .status-done{ background: #0e7b5533; border-color:#63d297aa; color:#b9f3d3;}
+
+        /* Buttons */
+        .btn-ghost{
+            border:1px solid rgba(255,255,255,.20); color: var(--text);
+            background: transparent; padding: .38rem .7rem; border-radius: 10px;
+            transition: background .2s ease, transform .15s ease, border-color .2s ease;
+            cursor: pointer;
+        }
+        .btn-ghost:hover{ background: rgba(255,255,255,.08); transform: translateY(-1px); }
+        .btn-del{ border-color:#ff8d8daa; }
+        .btn-del:hover{ background:#ff6b6b26; }
+
+        .btn{ font-weight:800; letter-spacing:.3px; cursor: pointer; }
+        .btn-add{
+            border:none; background: linear-gradient(135deg, #6ea8fe, #3ddab6); color:#0b1020;
+            box-shadow: 0 8px 20px rgba(16, 63, 236, .25);
+            transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+            border-radius: 12px; padding: .55rem .9rem;
+        }
+        .btn-add:hover{ transform: translateY(-1px); filter: brightness(1.05); }
+        .btn-add:active{ transform: translateY(0); box-shadow: 0 4px 12px rgba(16,63,236,.18); }
+
+        /* Footer note */
+        .hint{ color: var(--muted); font-size: .9rem; padding: 0 24px 26px; }
+
+        /* Small helpers */
+        .divider{ height:1px; background: rgba(255,255,255,.10); margin: 0 24px 8px; }
+        .d-grid { display: grid; }
+        .gap-2 { gap: .5rem; }
+        .mb-1 { margin-bottom: .25rem; }
+        .row{ display:flex; flex-wrap:wrap; margin-left:-8px; margin-right:-8px; }
+        .col-md-7, .col-md-3, .col-md-2 { padding-left:8px; padding-right:8px; }
+        .col-md-7{ flex: 0 0 58.333%; max-width:58.333%; }
+        .col-md-3{ flex: 0 0 25%; max-width:25%; }
+        .col-md-2{ flex: 0 0 16.666%; max-width:16.666%; }
+
+        /* Responsive */
+        @media (max-width: 768px){
+            .app-header{ flex-direction:column; align-items:flex-start; }
+            .search-wrap{ width:100%; max-width: none; }
+            .col-md-7, .col-md-3, .col-md-2 { flex: 0 0 100%; max-width:100%; }
+        }
+    </style>
+</head>
+<body>
+<main class="app-wrap">
+    <section class="glass-card" aria-label="Todo UI">
+        <!-- Header -->
+        <header class="app-header">
+            <div>
+                <h1 class="app-title mb-1">Todo List</h1>
+                <p class="sub">Կազմակերպիր օրդ․ ավելացրու, ֆիլտրիր, փոխիր առաջնահերթությունները 👇</p>
+            </div>
+
+            <!-- Search -->
+            <div class="search-wrap">
+                <input id="search" class="form-control search" placeholder="Որոնել…" />
+            </div>
+        </header>
+
+        <!-- Tabs & Sort -->
+        <div class="tabs" role="tablist" aria-label="Ֆիլտրեր">
+            <button class="tab active" data-tab="All" role="tab" aria-selected="true">
+                All <span class="tab-badge" id="cnt-all">0</span>
+            </button>
+            <button class="tab" data-tab="Pending" role="tab" aria-selected="false">
+                Pending <span class="tab-badge" id="cnt-pending">0</span>
+            </button>
+            <button class="tab" data-tab="In Progress" role="tab" aria-selected="false">
+                In Progress <span class="tab-badge" id="cnt-progress">0</span>
+            </button>
+            <button class="tab" data-tab="Completed" role="tab" aria-selected="false">
+                Completed <span class="tab-badge" id="cnt-done">0</span>
+            </button>
+
+            <div class="tabs-spacer" aria-hidden="true"></div>
+
+            <div class="sort" aria-label="Դասավորել">
+                <label class="sort-label" for="sort">Sort</label>
+                <select id="sort" class="form-select sort-select">
+                    <option value="newest" selected>Newest</option>
+                    <option value="status">By Status</option>
+                    <option value="az">A → Z</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Add form -->
+        <div class="form-zone">
+            <div class="row gap-2">
+                <div class="col-md-7">
+                    <input id="title" type="text" class="form-control" placeholder="Գրիր առաջադրանքը…" />
+                </div>
+                <div class="col-md-3">
+                    <select id="status" class="form-select">
+                        <option>Pending</option>
+                        <option>In Progress</option>
+                        <option>Completed</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button id="add" class="btn btn-add">Ավելացնել</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- List -->
+        <div class="list-holder">
+            <ul id="list" class="list-group" aria-label="Առաջադրանքների ցուցակ">
+
+                <!--                <li class="list-group-item">-->
+                <!--                    <div class="task-left" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">-->
+                <!--                        <span class="task-text" style="font-weight:700;letter-spacing:.2px;">zxcvbnm #3</span>-->
+                <!--                        <span class="badge status status-done">Completed</span>-->
+                <!--                    </div>-->
+                <!--                    <div class="d-flex gap-2" style="display:flex;">-->
+                <!--                        <button class="btn-ghost btn-del" >Delete</button>-->
+                <!--                    </div>-->
+                <!--                </li>-->
+            </ul>
+        </div>
+
+    </section>
+</main>
+
+<script>
+    const STORAGE_KEY="todos-v1",STATUSES=["Pending","In Progress","Completed"];let items=load()||seed();function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(items))}function load(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))}catch{return null}}function seed(){const t=Date.now();return[{id:uid(),title:"asdfghjkl #1",status:"Pending",createdAt:t-36e5},{id:uid(),title:"qwertyuio #2",status:"In Progress",createdAt:t-18e5},{id:uid(),title:"zxcvbnm #3",status:"Completed",createdAt:t-3e5}]}function uid(){return crypto.randomUUID&&crypto.randomUUID()||String(Date.now()+Math.random())}const $list=document.getElementById("list"),$title=document.getElementById("title"),$status=document.getElementById("status"),$add=document.getElementById("add"),$search=document.getElementById("search"),$sort=document.getElementById("sort"),$tabs=Array.from(document.querySelectorAll(".tab")),$cntAll=document.getElementById("cnt-all"),$cntP=document.getElementById("cnt-pending"),$cntPr=document.getElementById("cnt-progress"),$cntD=document.getElementById("cnt-done");let activeTab="All",query="",sortBy="newest";function onAdd(){const t=$title.value.trim();t&&(items.unshift({id:uid(),title:t,status:$status.value,createdAt:Date.now()}),$title.value="",$status.value="Pending",save(),render())}function render(){const t=filteredAndSorted(items,{tab:activeTab,q:query,sort:sortBy});$list.innerHTML=t.map(renderItem).join("");const e={All:items.length,Pending:0,"In Progress":0,Completed:0};items.forEach((t=>e[t.status]++)),$cntAll.textContent=e.All,$cntP.textContent=e.Pending,$cntPr.textContent=e["In Progress"],$cntD.textContent=e.Completed}function renderItem(t){const e="Pending"===t.status?"status-pending":"In Progress"===t.status?"status-progress":"status-done";return`\n      <li class="list-group-item" data-id="${t.id}">\n        <div class="task-left" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">\n          <span class="task-text" style="font-weight:700;letter-spacing:.2px;">${escapeHtml(t.title)}</span>\n          <span class="badge status ${e}" title="Change status">${t.status}</span>\n        </div>\n        <div class="d-flex gap-2" style="display:flex;">\n          <button class="btn-ghost btn-del" title="Delete">Delete</button>\n        </div>\n      </li>`}function filteredAndSorted(t,{tab:e,q:n,sort:s}){let a=t.slice();if(n&&(a=a.filter((t=>t.title.toLowerCase().includes(n)))),e&&"All"!==e&&(a=a.filter((t=>t.status===e))),"newest"===s)a.sort(((t,e)=>e.createdAt-t.createdAt));else if("status"===s){const t=t=>STATUSES.indexOf(t);a.sort(((e,n)=>t(e.status)-t(n.status)||n.createdAt-e.createdAt))}else"az"===s&&a.sort(((t,e)=>t.title.localeCompare(e.title,void 0,{sensitivity:"base"})||e.createdAt-t.createdAt));return a}function escapeHtml(t){return t.replace(/[&<>"']/g,(t=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[t])))}$add.addEventListener("click",onAdd),$title.addEventListener("keydown",(t=>{"Enter"===t.key&&onAdd()})),$search.addEventListener("input",(t=>{query=t.target.value.trim().toLowerCase(),render()})),$sort.addEventListener("change",(t=>{sortBy=t.target.value,render()})),$tabs.forEach((t=>{t.addEventListener("click",(()=>{$tabs.forEach((t=>t.classList.remove("active"))),t.classList.add("active"),activeTab=t.dataset.tab,render()}))})),$list.addEventListener("click",(t=>{const e=t.target.closest("li[data-id]");if(!e)return;const n=e.dataset.id;if(t.target.matches(".btn-del"))return items=items.filter((t=>t.id!==n)),save(),void render();if(t.target.matches(".badge.status")){const t=items.find((t=>t.id===n));if(!t)return;const e=(STATUSES.indexOf(t.status)+1)%STATUSES.length;return t.status=STATUSES[e],save(),void render()}})),render();
+</script>
+<script src="script.js"  type="module"></script>
+
+</body>
+</html>

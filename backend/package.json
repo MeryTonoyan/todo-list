@@ -1,0 +1,26 @@
+{
+  "name": "todo-list",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "dev": "../node_modules/.bin/nodeman server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MeryTonoyan/todo-list.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MeryTonoyan/todo-list/issues"
+  },
+  "homepage": "https://github.com/MeryTonoyan/todo-list#readme",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "nodeman": "^1.1.2"
+  }
+}
