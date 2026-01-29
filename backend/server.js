@@ -1,10 +1,11 @@
-import 'dotenv/config';
-import express from 'express';
-import cors from 'cors';
-
-const app = express();
-app.use(cors());
-app.use(express.json());
+import 'dotenv/config'
+import express, { urlencoded } from 'express'
+import { readFile, writeFile } from 'fs/promises'
+import cors from 'cors'
+const app = express()
+app.use(express.json())
+app.use(cors())
+app.use(urlencoded({ extended: true }))
 
 let todos = [
     {   id: "1",
